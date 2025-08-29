@@ -1,0 +1,96 @@
+{
+  "info": {
+    "name": "PJUD Tracker API (Chile)",
+    "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+    "description": "Colecci\u00f3n para probar la API de seguimiento de causas judiciales (Chile), usando variable {{base_url}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Sync Causa",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/causas/C-1234-2025/sync?tribunal=Santiago",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "causas",
+            "C-1234-2025",
+            "sync"
+          ],
+          "query": [
+            {
+              "key": "tribunal",
+              "value": "Santiago"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Eventos Nuevos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/eventos/nuevos?limit=5",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "eventos",
+            "nuevos"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ingesta Email",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/ingesta/email",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "ingesta",
+            "email"
+          ]
+        }
+      },
+      "response": []
+    }
+    
+    
+** Enviromment    
+    {
+  "id": "abcd1234-5678-90ef-ghij-klmnopqrstuv",
+  "name": "PJUD Tracker Local (127.0.0.1)",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-08-29T15:11:27.070017Z",
+  "_postman_exported_using": "ChatGPT"
+}
+  ]
+}
+
+
