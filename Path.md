@@ -43,29 +43,7 @@ pjud-tracker/
       ├─ portal.py
       └─ email.py
 ```
-
-
-
-# `requirements.txt`
-
-```text
-fastapi==0.112.0
-uvicorn[standard]==0.30.5
-SQLAlchemy==2.0.34
-psycopg2-binary==2.9.9
-alembic==1.13.2
-pydantic==2.8.2
-python-dotenv==1.0.1
-celery==5.4.0
-redis==5.0.8
-playwright==1.47.2
-beautifulsoup4==4.12.3
-httpx==0.27.2
-imapclient==2.3.1
-mailparser==3.16.2
-requests==2.32.3
-```
-#`1) Objetivo y alcance`
+1) Objetivo y alcance
 
 Qué hace: centraliza causas por RUT/rol/tribunal, detecta novedades (resoluciones, estados, escritos, audiencias), notifica (email/WhatsApp/app), agenda plazos, guarda documentos y permite reportes.
 
@@ -79,7 +57,7 @@ Backend API: Python (FastAPI/Django Rest) o Node (NestJS) con autenticación JWT
 
 Ingesta de datos (módulos):
 
-Conectores a portales judiciales (API oficial si existe; si no, scraping legal con Playwright/Scrapy + colas).
+Conectores a portales judiciales (API oficial si existe; si no, scraping con Playwright/Scrapy + colas).
 
 Ingesta de emails (parseo de notificaciones del tribunal).
 
@@ -89,7 +67,7 @@ Procesamiento: worker asíncrono (Celery/RQ/Sidekiq) para scraping, normalizaci�
 
 Storage: PostgreSQL (datos), S3/MinIO (archivos), Redis (colas/cache).
 
-Notificaciones: e-mail (SMTP/SendGrid), WhatsApp/Telegram (Twilio/Telegram Bot), push.
+Notificaciones: email (SMTP/SendGrid), WhatsApp/Telegram (Twilio/Telegram Bot), push.
 
 Observabilidad: logs + métricas + auditoría.
 
@@ -98,28 +76,26 @@ Observabilidad: logs + métricas + auditoría.
 Alta de causa: rol + tribunal + cliente (o importación masiva CSV/Excel).
 
 Monitoreo:
-
 Scheduler corre conectores (cada X minutos/horas por tribunal) → obtiene estado/actuaciones/documentos → normaliza → guarda solo cambios (hash).
 
 Reglas y alertas:
-
-“Si entra nueva resolución con texto que contenga ‘traslado’, crear plazo 5 días y notificar responsable”.
+“Si entra nueva resolución con texto que contenga traslado, crear plazo 5 días y notificar responsable”.
 
 Calendario y plazos:
-
 Genera eventos iCal/Google Calendar (lectura/escritura si conectas OAuth).
 
 Bandeja de novedades:
-
 Vista por abogado/cliente con filtros y búsquedas (texto completo sobre OCR).
 
 4) Módulo de ingesta (scraping/API)
 
-Primero: busca si hay API oficial o endpoints JSON. Si no:
+Primero: busca si hay API oficial o endpoints JSON.
 
-Playwright (headless) para portales con login, captcha visual simple (evitar romper TOS), y paginación.
+Si no: Playwright (headless) para portales con login, captcha visual simple (evitar romper TOS), y paginación.
 
-Buenas prácticas: backoff, rotación IP si el portal lo permite, y respetar términos de uso. Si el portal prohíbe scraping, evalúa convenio o parsing de emails oficiales como fuente principal.
+Buenas prácticas: backoff, rotación IP si el portal lo permite, y respetar términos de uso.
+
+Si el portal prohíbe scraping, evalúa convenio o parsing de emails oficiales como fuente principal.
 
 5) Procesamiento de documentos y búsqueda
 
@@ -127,11 +103,11 @@ OCR: Tesseract o PaddleOCR. Para PDFs escaneados: ocrmypdf.
 
 Texto completo: Postgres pg_trgm/tsvector o motor externo (OpenSearch/Elasticsearch) para búsquedas por frase, RUT, número de folio, etc.
 
-Extracción de fechas y entidades: spaCy + reglas locales (fechas procesales, “téngase por notificado”, “traslado”, “cúmplase”).
+Extracción de fechas y entidades: spaCy + reglas locales (fechas procesales, téngase por notificado, traslado, cúmplase).
 
 6) Seguridad y cumplimiento
 
-Legal: revisa TOS del portal judicial, privacidad de datos personales (p. ej. normativa local de protección de datos).
+Legal: revisa TOS del portal judicial, privacidad de datos personales (ej. normativa local de protección de datos).
 
 Técnico: RBAC, 2FA, cifrado en reposo (KMS) y en tránsito (TLS), auditoría (quién vio/descargó qué), retención de datos y políticas de borrado.
 
@@ -160,11 +136,10 @@ Facturación: horas por causa → factura.
 9) Roadmap de MVP → Pro
 
 MVP:
-
 Alta de causas, conector a 1 portal, detección de novedades, notificación por email, subida/descarga de PDFs, búsqueda básica y plazos simples.
-Pro:
 
-OCR masivo + búsqueda semántica, reglas avanzadas (detectar “traslado”, “cúmplase”), dashboards, WhatsApp/push, multijurisdicción, auditoría completa, firmas/integraciones.
+Pro:
+OCR masivo + búsqueda semántica, reglas avanzadas (detectar traslado, cúmplase), dashboards, WhatsApp/push, multijurisdicción, auditoría completa, firmas/integraciones.
 
 Consejos prácticos antes de codear
 
@@ -177,6 +152,27 @@ Logra idempotencia (hash de eventos/documentos) para evitar duplicados.
 Mantén un catálogo de feriados y reglas de días hábiles por jurisdicción.
 
 Define desde el día 1 auditoría y backups.
+
+
+# `requirements.txt`
+
+```text
+fastapi==0.112.0
+uvicorn[standard]==0.30.5
+SQLAlchemy==2.0.34
+psycopg2-binary==2.9.9
+alembic==1.13.2
+pydantic==2.8.2
+python-dotenv==1.0.1
+celery==5.4.0
+redis==5.0.8
+playwright==1.47.2
+beautifulsoup4==4.12.3
+httpx==0.27.2
+imapclient==2.3.1
+mailparser==3.16.2
+requests==2.32.3
+```
 
 # Próximos pasos
 
