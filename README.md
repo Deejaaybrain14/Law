@@ -2,16 +2,7 @@
 title: "MVP: Seguidor de Causas - Poder Judicial de Chile"
 author: "Bea / Equipo"
 date: "`r format(Sys.Date(), '%Y-%m-%d')`"
-output:
-  html_document:
-    toc: true
-    toc_depth: 3
-    toc_float: true
-    number_sections: true
-    code_folding: hide
-  pdf_document: default
-fontsize: 11pt
-lang: es
+
 ---
 
 
