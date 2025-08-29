@@ -65,7 +65,7 @@ imapclient==2.3.1
 mailparser==3.16.2
 requests==2.32.3
 ```
-1) Objetivo y alcance
+#`1) Objetivo y alcance`
 
 Qué hace: centraliza causas por RUT/rol/tribunal, detecta novedades (resoluciones, estados, escritos, audiencias), notifica (email/WhatsApp/app), agenda plazos, guarda documentos y permite reportes.
 
