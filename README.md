@@ -1,7 +1,7 @@
 ---
 title: "MVP: Seguidor de Causas - Poder Judicial de Chile"
 author: "Bea / Equipo"
-date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+
 
 ---
 
