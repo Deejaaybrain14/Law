@@ -1,21 +1,6 @@
 title: "MVP: Seguidor de Causas - Poder Judicial de Chile"
 author: "Bea / Equipo"
-date: "`r format(Sys.Date(), '%Y-%m-%d')`"
-output:
-  pdf_document: default
-  html_document:
-    toc: true
-    toc_depth: 3
-    toc_float: true
-    number_sections: true
-    code_folding: hide
-fontsize: 11pt
-lang: es
----
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-```
 
 # Objetivo
 
