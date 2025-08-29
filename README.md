@@ -14,9 +14,6 @@ fontsize: 11pt
 lang: es
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-```
 
 # Objetivo
 
