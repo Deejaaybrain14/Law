@@ -43,116 +43,101 @@ pjud-tracker/
       ├─ portal.py
       └─ email.py
 ```
-1) Objetivo y alcance
+# **1) Objetivo y alcance**
 
-Qué hace: centraliza causas por RUT/rol/tribunal, detecta novedades (resoluciones, estados, escritos, audiencias), notifica (email/WhatsApp/app), agenda plazos, guarda documentos y permite reportes.
+- **Qué hace:** centraliza causas por **RUT/rol/tribunal**, detecta **novedades** (resoluciones, estados, escritos, audiencias), **notifica** (email/WhatsApp/app), agenda **plazos**, guarda **documentos** y permite **reportes**.  
+- **Para quién:** **multi-abogado** y **multi-cliente** (**multi-tenant**), con **control de acceso por rol**.  
 
-Para quién: multi-abogado y multi-cliente (multi-tenant), con control de acceso por rol.
+---
 
-2) Arquitectura (alto nivel)
+# **2) Arquitectura (alto nivel)**
 
-Frontend: Web (React/Vue) + app móvil opcional.
+- **Frontend:** Web (**React/Vue**) + app móvil opcional.  
+- **Backend API:** Python (**FastAPI/Django Rest**) o Node (**NestJS**) con autenticación **JWT/OAuth2**.  
+- **Ingesta de datos (módulos):**
+  - **Conectores** a portales judiciales (**API oficial** si existe; si no, scraping con **Playwright/Scrapy** + colas).  
+  - **Ingesta de emails** (parseo de notificaciones del tribunal).  
+  - **OCR/PDF** para resoluciones y escritos.  
+- **Procesamiento:** worker **asíncrono** (**Celery/RQ/Sidekiq**) para scraping, normalización y dif de cambios.  
+- **Storage:** **PostgreSQL** (datos), **S3/MinIO** (archivos), **Redis** (colas/cache).  
+- **Notificaciones:** **email** (SMTP/SendGrid), **WhatsApp/Telegram** (Twilio/Telegram Bot), **push**.  
+- **Observabilidad:** logs + métricas + auditoría.  
 
-Backend API: Python (FastAPI/Django Rest) o Node (NestJS) con autenticación JWT/OAuth2.
+---
 
-Ingesta de datos (módulos):
+# **3) Flujo de trabajo**
 
-Conectores a portales judiciales (API oficial si existe; si no, scraping con Playwright/Scrapy + colas).
+- **Alta de causa:** rol + tribunal + cliente (o importación masiva CSV/Excel).  
+- **Monitoreo:**  
+  Scheduler corre conectores (cada X minutos/horas por tribunal) → obtiene estado/actuaciones/documentos → **normaliza** → guarda **solo cambios (hash)**.  
+- **Reglas y alertas:**  
+  “Si entra nueva **resolución** con texto que contenga *traslado*, crear **plazo 5 días** y notificar responsable”.  
+- **Calendario y plazos:**  
+  Genera eventos **iCal/Google Calendar** (lectura/escritura si conectas OAuth).  
+- **Bandeja de novedades:**  
+  Vista por **abogado/cliente** con filtros y búsquedas (**texto completo sobre OCR**).  
 
-Ingesta de emails (parseo de notificaciones del tribunal).
+---
 
-OCR/PDF para resoluciones y escritos.
+# **4) Módulo de ingesta (scraping/API)**
 
-Procesamiento: worker asíncrono (Celery/RQ/Sidekiq) para scraping, normalización y dif de cambios.
+- **Primero:** busca si hay **API oficial** o endpoints JSON.  
+- Si no: **Playwright** (headless) para portales con login, captcha visual simple (evitar romper TOS), y paginación.  
+- **Buenas prácticas:** **backoff**, **rotación IP** si el portal lo permite, y **respetar términos de uso**.  
+- Si el portal **prohíbe scraping**, evalúa **convenio** o **parsing de emails oficiales** como fuente principal.  
 
-Storage: PostgreSQL (datos), S3/MinIO (archivos), Redis (colas/cache).
+---
 
-Notificaciones: email (SMTP/SendGrid), WhatsApp/Telegram (Twilio/Telegram Bot), push.
+# **5) Procesamiento de documentos y búsqueda**
 
-Observabilidad: logs + métricas + auditoría.
+- **OCR:** Tesseract o PaddleOCR. Para PDFs escaneados: **ocrmypdf**.  
+- **Texto completo:** Postgres **pg_trgm/tsvector** o motor externo (**OpenSearch/Elasticsearch**) para búsquedas por frase, RUT, número de folio, etc.  
+- **Extracción de fechas y entidades:** **spaCy** + reglas locales (fechas procesales, *téngase por notificado*, *traslado*, *cúmplase*).  
 
-3) Flujo de trabajo
+---
 
-Alta de causa: rol + tribunal + cliente (o importación masiva CSV/Excel).
+# **6) Seguridad y cumplimiento**
 
-Monitoreo:
-Scheduler corre conectores (cada X minutos/horas por tribunal) → obtiene estado/actuaciones/documentos → normaliza → guarda solo cambios (hash).
+- **Legal:** revisa **TOS** del portal judicial, privacidad de **datos personales** (ej. normativa local de protección de datos).  
+- **Técnico:** **RBAC**, **2FA**, cifrado **en reposo (KMS)** y **en tránsito (TLS)**, **auditoría** (quién vio/descargó qué), **retención de datos** y **políticas de borrado**.  
+- **Multi-tenant:** scoping por **tenant_id** en todas las consultas.  
 
-Reglas y alertas:
-“Si entra nueva resolución con texto que contenga traslado, crear plazo 5 días y notificar responsable”.
+---
 
-Calendario y plazos:
-Genera eventos iCal/Google Calendar (lectura/escritura si conectas OAuth).
+# **7) Frontend (vistas clave)**
 
-Bandeja de novedades:
-Vista por abogado/cliente con filtros y búsquedas (texto completo sobre OCR).
+- **Dashboard:** “novedades hoy”, plazos próximos, audiencias.  
+- **Buscador:** por rol/tribunal/cliente/palabras clave (sobre OCR).  
+- **Detalle de causa:** línea de tiempo, resoluciones, escritos, documentos, tareas.  
+- **Reportes:** productividad (resoluciones por mes), SLA de respuesta, causas por estado/materia.  
 
-4) Módulo de ingesta (scraping/API)
+---
 
-Primero: busca si hay API oficial o endpoints JSON.
+# **8) Integraciones útiles**
 
-Si no: Playwright (headless) para portales con login, captcha visual simple (evitar romper TOS), y paginación.
+- **Email in:** parseo de notificaciones del Poder Judicial (**IMAP webhook/cron**).  
+- **Calendario:** **Google/Microsoft** para audiencias/plazos.  
+- **Firma electrónica:** proveedor local si necesitas **presentar escritos** desde la plataforma (según normas).  
+- **Facturación:** horas por causa → factura.  
 
-Buenas prácticas: backoff, rotación IP si el portal lo permite, y respetar términos de uso.
+---
 
-Si el portal prohíbe scraping, evalúa convenio o parsing de emails oficiales como fuente principal.
+# **9) Roadmap de MVP → Pro**
 
-5) Procesamiento de documentos y búsqueda
+- **MVP:**  
+  Alta de causas, conector a 1 portal, detección de novedades, notificación por email, subida/descarga de PDFs, búsqueda básica y plazos simples.  
+- **Pro:**  
+  OCR masivo + búsqueda semántica, reglas avanzadas (detectar *traslado*, *cúmplase*), dashboards, WhatsApp/push, multijurisdicción, auditoría completa, firmas/integraciones.  
 
-OCR: Tesseract o PaddleOCR. Para PDFs escaneados: ocrmypdf.
+---
 
-Texto completo: Postgres pg_trgm/tsvector o motor externo (OpenSearch/Elasticsearch) para búsquedas por frase, RUT, número de folio, etc.
+# **Consejos prácticos antes de codear**
 
-Extracción de fechas y entidades: spaCy + reglas locales (fechas procesales, téngase por notificado, traslado, cúmplase).
-
-6) Seguridad y cumplimiento
-
-Legal: revisa TOS del portal judicial, privacidad de datos personales (ej. normativa local de protección de datos).
-
-Técnico: RBAC, 2FA, cifrado en reposo (KMS) y en tránsito (TLS), auditoría (quién vio/descargó qué), retención de datos y políticas de borrado.
-
-Multi-tenant: scoping por tenant_id en todas las consultas.
-
-7) Frontend (vistas clave)
-
-Dashboard: “novedades hoy”, plazos próximos, audiencias.
-
-Buscador: por rol/tribunal/cliente/palabras clave (sobre OCR).
-
-Detalle de causa: línea de tiempo, resoluciones, escritos, documentos, tareas.
-
-Reportes: productividad (resoluciones por mes), SLA de respuesta, causas por estado/materia.
-
-8) Integraciones útiles
-
-Email in: parseo de notificaciones del Poder Judicial (IMAP webhook/cron).
-
-Calendario: Google/Microsoft para audiencias/plazos.
-
-Firma electrónica: proveedor local si necesitas presentar escritos desde la plataforma (según normas).
-
-Facturación: horas por causa → factura.
-
-9) Roadmap de MVP → Pro
-
-MVP:
-Alta de causas, conector a 1 portal, detección de novedades, notificación por email, subida/descarga de PDFs, búsqueda básica y plazos simples.
-
-Pro:
-OCR masivo + búsqueda semántica, reglas avanzadas (detectar traslado, cúmplase), dashboards, WhatsApp/push, multijurisdicción, auditoría completa, firmas/integraciones.
-
-Consejos prácticos antes de codear
-
-Empieza por una sola jurisdicción/portal y documenta bien los selectores (cambian seguido).
-
-Diseña el conector como plugin (interfaz común search(rol), fetch_events(...)).
-
-Logra idempotencia (hash de eventos/documentos) para evitar duplicados.
-
-Mantén un catálogo de feriados y reglas de días hábiles por jurisdicción.
-
-Define desde el día 1 auditoría y backups.
-
+- Empieza por **una sola jurisdicción/portal** y documenta bien los **selectores** (cambian seguido).  
+- Diseña el conector como **plugin** (interfaz común `search(rol)`, `fetch_events(...)`).  
+- Logra **idempotencia** (hash de eventos/documentos) para evitar duplicados.  
+- Mantén un **catálogo de feriados** y reglas de **días hábiles** por jurisdicción.  
+- Define desde el día 1 **auditoría** y **backups**.  
 
 # `requirements.txt`
 
